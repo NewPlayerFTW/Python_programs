@@ -1,11 +1,11 @@
 from __future__ import print_function
+from threading import Thread
 import random
-import threading
 import time
 
 class Matrix_engine:
     def __init__(self, threads_amount):
-        self.matrix_list = [];
+        self.matrix_list = []
         self.threads_amount = threads_amount
 
     def add(self, lines, columns):
@@ -41,18 +41,12 @@ class Matrix_engine:
         size_2 = self.matrix_size(matrix_2)
         if size_1[1] == size_2[0]:
             result_matrix = self.create_empty_matrix(size_1[0], size_2[1])
-            threads = []
-            # for i in range(self.threads_amount):
-            #     t = threading.Thread(target=self.mult_index, args=(result_matrix, matrix_1, matrix_2, size_1, size_2, i))
-            #     threads.append(t)
-            #     threads[i].start()
-            t = threading.Thread(target=self.mult_index, args=(result_matrix, matrix_1, matrix_2, size_1, size_2, 0))
-            t2 = threading.Thread(target=self.mult_index, args=(result_matrix, matrix_1, matrix_2, size_1, size_2, 1))
-            t.start()
-            t2.start()
-            t.join()
-            t2.join()
             self.matrix_list.append(result_matrix)
+            threads = []
+            for i in range(self.threads_amount):
+                threads.append(Thread(target=self.mult_index, args=(matrix_1, matrix_2, size_1, size_2, i)))
+                threads[i].run()
+
 
     def inversion(self, number):
         matrix = self.matrix_list[number]
@@ -94,22 +88,24 @@ class Matrix_engine:
         return result_matrix
 
     #THREADS FUNCTIONS
-    def mult_index(self, destination, source_1, source_2, size_1, size_2, start):
+    def mult_index(self, source_1, source_2, size_1, size_2, start):
+        result_matrix = self.matrix_list[len(self.matrix_list) - 1]
         line = start
         index = [line, 0]
         while line < size_1[0]:
-            for i in range(size_1[1]):
-                for j in range(size_2[0]):
-                    destination[line][i] += source_1[line][j] * source_2[j][i]
+            for i in range(size_1[0]):
+                for j in range(size_2[1]):
+                    result_matrix[line][i] += source_1[line][j] * source_2[j][i]
             line += self.threads_amount
 
 
 start = time.time()
 
-m = Matrix_engine(2)
-m.add(100, 100)
-m.add(100, 100)
+m = Matrix_engine(16)
+m.add(200, 200)
+m.add(200, 200)
 m.mult(0, 1)
+#m.display(2)
 
 end = time.time()
 print (end - start)
