@@ -1,22 +1,26 @@
-__author__ = 'student'
+from __future__ import print_function
 import random
 
 class Matrix_engine:
     def __init__(self):
         self.matrix_list = [];
 
-    def add_matrix(self, lines, columns):
+    def add(self, lines, columns):
         matrix = []
         for i in range(lines):
-            line = [random.randint(1, 100) for r in range(columns)]
+            line = [random.randint(1, 9) for r in range(columns)]
             matrix.append(line)
         self.matrix_list.append(matrix)
 
 
-    def display_matrix(self, number):
+    def display(self, number):
         size = self.matrix_size(self.matrix_list[number])
         for i in range(size[0]):
-            print self.matrix_list[number][i]
+            print('|', end='')
+            for j in range(size[1]):
+                print("%.2f" % self.matrix_list[number][i][j], end=' ')
+            print('|')
+        print
 
     def transposition(self, number):
         size = self.matrix_size(self.matrix_list[number])
@@ -27,7 +31,7 @@ class Matrix_engine:
                 result_matrix[j][i] = self.matrix_list[number][i][j]
         self.matrix_list[number] = result_matrix
 
-    def multiplication(self, number1, number2):
+    def mult(self, number1, number2):
         matrix1_size = self.matrix_size(self.matrix_list[number1])
         matrix2_size = self.matrix_size(self.matrix_list[number2])
         if matrix1_size[0] == matrix2_size[1]:
@@ -38,31 +42,25 @@ class Matrix_engine:
                         result_matrix[i][j] += self.matrix_list[number1][i][k] * self.matrix_list[number2][k][j]
             self.matrix_list.append(result_matrix)
 
-    def matrix_inversion(self, number):
-        #matrix = [[3, -2], [1, 3]] # RESULT: [[3, 2][-1, 3]]
-        matrix = [[2, -1, 2], [-1, 3, 0], [1, 2, 3]] #RESULT: [[9, 3, -5],[7, 4, -5], [-6, -2, 5]]
-        #matrix = [[3, 3, -4, -3],[0, 6, 1, 1], [5, 4, 2, 1], [2, 3, 3, 2]]
-        #matrix = self.matrix_list[number]
+    def inversion(self, number):
+        matrix = self.matrix_list[number]
         size = self.matrix_size(matrix)
         if size[0] is not size[1]:
             return None
 
         identity = self.create_identity_matrix(size[0])
-        print matrix
         for i in range(size[0]):
             divider = float(matrix[i][i])
             for j in range(size[0]):
-                matrix[i][j] /= divider #dzielenie wiersza przez [i][i] element
+                matrix[i][j] /= divider
                 identity[i][j] /= divider
 
-            #ten wiersz pomnozony przez wiersze pod/nad nim odejmujemy od wszystkich innych wierszy
             for j in range(size[0]):
                 if i is not j:
                     mult = matrix[j][i]
                     for k in range(size[0]):
                         matrix[j][k] -= matrix[i][k] * mult
                         identity[j][k] -= identity[i][k] * mult
-        print identity
 
     # ADDITIONAL FUNCTIONS
     def matrix_size(self, matrix):
@@ -84,8 +82,8 @@ class Matrix_engine:
         return result_matrix
 
 m = Matrix_engine()
-m.add_matrix(5, 5)
-m.matrix_inversion(0)
+m.add(10, 10)
+m.display(0)
 
 # klasa z lista macierzy
 # mnozenie macierzy (3 indeksy)
