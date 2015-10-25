@@ -45,7 +45,9 @@ class Matrix_engine:
             threads = []
             for i in range(self.threads_amount):
                 threads.append(Thread(target=self.mult_index, args=(matrix_1, matrix_2, size_1, size_2, i)))
-                threads[i].run()
+            for i in range(self.threads_amount):
+                threads[i].start()
+                #threads[i].join()
 
 
     def inversion(self, number):
@@ -96,14 +98,15 @@ class Matrix_engine:
             for i in range(size_1[0]):
                 for j in range(size_2[1]):
                     result_matrix[line][i] += source_1[line][j] * source_2[j][i]
+                    #print("thread", start, "working")
             line += self.threads_amount
 
 
 start = time.time()
 
-m = Matrix_engine(16)
-m.add(200, 200)
-m.add(200, 200)
+m = Matrix_engine(4)
+m.add(10, 10)
+m.add(10, 10)
 m.mult(0, 1)
 #m.display(2)
 
