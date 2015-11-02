@@ -2,12 +2,12 @@ from PIL import Image, ImageDraw
 from threading import Thread
 import math
 
-class Stick(Thread):
+class Branch(Thread):
     def __init__(self, image, depth, max_depth, x, y, angle, length, width,
                  left_branch_length, right_branch_length, left_branch_resize, right_branch_resize,
                  left_branch_width, right_branch_width, left_branch_width_loss, right_branch_width_loss,
                  angle_between_branches):
-        super(Stick, self).__init__()
+        super(Branch, self).__init__()
         self.image = image
         self.max_depth = max_depth
         self.depth = depth
@@ -34,7 +34,7 @@ class Stick(Thread):
         self.image.line((self.x, self.y, next_x, next_y), fill=0, width=self.width)
         if ++self.depth is not self.max_depth:
             angle = self.angle_between_branches / 2
-            left_stick = Stick(self.image, self.depth + 1, self.max_depth, next_x, next_y,
+            left_stick = Branch(self.image, self.depth + 1, self.max_depth, next_x, next_y,
                                self.angle - angle, self.left_branch_length, self.left_branch_width,
                                self.left_branch_length * self.left_branch_resize,
                                self.right_branch_length * self.right_branch_resize,
@@ -45,7 +45,7 @@ class Stick(Thread):
                                self.angle_between_branches)
 
 
-            rigth_stick = Stick(self.image, self.depth + 1, self.max_depth, next_x, next_y,
+            rigth_stick = Branch(self.image, self.depth + 1, self.max_depth, next_x, next_y,
                                 self.angle + angle, self.right_branch_length, self.right_branch_width,
                                 self.left_branch_length * self.left_branch_resize,
                                 self.right_branch_length * self.right_branch_resize,
@@ -61,7 +61,7 @@ class Stick(Thread):
 
 im = Image.new('RGB', (2000, 2000), (255, 255, 255, 255))
 draw = ImageDraw.Draw(im)
-s = Stick(draw,         #image
+s = Branch(draw,         #image
           0,            #current depth
           12,           #max depth
           1000,         #position x
@@ -81,5 +81,4 @@ s = Stick(draw,         #image
 s.start()
 s.join()
 
-im.show()
-im.save("abcd.ppm", "ppm")
+im.save("result.ppm", "ppm")
