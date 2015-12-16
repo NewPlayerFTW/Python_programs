@@ -1,7 +1,7 @@
 import random
 import time
 import os
-from threading import Thread, Lock
+from threading import Thread, Lock, Condition
 from Tkinter import *
 from PIL import Image, ImageTk
 
@@ -14,7 +14,8 @@ class Cell:
         self.next_state = -1
         self.x = x
         self.y = y
-        self.taken = None
+        self.visited = None
+        self.color = (255, 255, 255)
 
 
 class Board:
@@ -87,17 +88,23 @@ class Board:
                         self.cells[i][j].next_state = REVIVE
 
     def set_states(self):
+        self.pixels = self.image.load()
         for i in range(self.width):
             for j in range(self.height):
                 if self.cells[i][j].next_state is DYING:
                     self.cells[i][j].current_state = DEAD
+                    self.pixels[i, j] = (0, 0, 0)
                 else:
                     self.cells[i][j].current_state = ALIVE
+                    self.pixels[i, j] = self.cells[i][j].color
 
 
 class Tribe(Thread):
     lock = Lock()
+    condition = Condition()
+
     amount = 0
+    count = 0
     def __init__(self, board, units, color):
         super(Tribe, self).__init__()
         self.board = board
@@ -110,53 +117,71 @@ class Tribe(Thread):
         Tribe.lock.release()
 
     def populate(self):
+        cells = self.board.cells
+        pixels = self.board.pixels
         for i in range(self.units):
             x = random.randint(0, self.board.width - 1)
             y = random.randint(0, self.board.height - 1)
-            if None is self.board.cells[x][y].taken:
-                self.board.cells[x][y].taken = True
-                self.board.pixels[x, y] = self.color
+            if None is cells[x][y].visited:
+                cells[x][y].visited = True
+                pixels[x, y] = self.color
             else:
                 i -= 1
 
     def run(self):
-        pass
+        while(1):
+            cells = self.board.cells
+            for i in range(self.board.width):
+                for j in range(self.board.height):
+                    if None is cells[i][j].visited and False is Tribe.lock.locked():
+                        Tribe.lock.acquire()
+                        cells[i][j].visited = True
+                        cells[i][j].color = self.color
+                        Tribe.lock.release()
+
+            if False is Tribe.lock.locked():
+                Tribe.lock.acquire()
+                Tribe.count += 1
+                Tribe.lock.release()
+
+            Tribe.condition.acquire()
+            while Tribe.count != Tribe.amount:
+                Tribe.condition.wait()
+
+            Tribe.condition.notify_all()
+            Tribe.condition.release()
+            Tribe.count = 0
 
 
-# for i in range(1000):
-#     print '\n' * 10
-#     b.show()
-#     b.update_states()
-#     b.set_states()
-#     time.sleep(1)
-#     b.image.show()
+def loop(board, threads, iterations, tk, label):
+    if 0 < iterations:
+        print 'loop {:d}'.format(100 - iterations)
+        board.update_states()
+        board.set_states()
+
+        tk.after(100, loop, board, Tribes, iterations - 1, tk)
 
 
+#Board init
+board = Board(300, 300)
 
-b = Board(500, 500)
-t1 = Tribe(b, 2000, (255, 0, 0))
-t2 = Tribe(b, 2000, (0, 255, 0))
-t3 = Tribe(b, 2000, (0, 0, 255))
-t4 = Tribe(b, 2000, (255, 255, 0))
-t5 = Tribe(b, 2000, (255, 0, 255))
-print Tribe.amount
+#Threads init
+Tribes = []
+Tribes.append(Tribe(board, 2000, (255, 0, 0)))
+Tribes.append(Tribe(board, 2000, (0, 255, 0)))
+Tribes.append(Tribe(board, 2000, (0, 0, 255)))
+Tribes.append(Tribe(board, 2000, (255, 255, 0)))
+Tribes.append(Tribe(board, 2000, (255, 0, 255)))
+for i in range(len(Tribes)):
+    Tribes[i].start()
+#for i in range(len(Tribes)):
+#    Tribes[i].join()
 
-t1.start()
-t2.start()
-t3.start()
-t4.start()
-t5.start()
-t1.join()
-t2.join()
-t3.join()
-t4.join()
-t5.join()
-
-root = Tk()
-
-display = ImageTk.PhotoImage(b.image)
-
-label = Label(root, image=display)
+#Tkinter init
+tk = Tk()
+display = ImageTk.PhotoImage(board.image)
+label = Label(tk, image=display)
 label.pack()
 
-root.mainloop()
+tk.after(100, loop, board, Tribes, 100, tk)
+tk.mainloop()
